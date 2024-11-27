@@ -157,7 +157,7 @@
 	<div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" on:click={closeLightbox} on:keydown={handleKeydown} tabindex="0">
 		<div class="relative bg-white rounded-lg aspect-square w-[600px]" on:click|stopPropagation>
 			<img src={currentImage.src} alt="Lightbox image" class="max-w-full max-h-full object-contain w-full h-full p-6" />
-			<a href="" download={currentImage.src} class="flex flex-row items-center gap-4 absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-[#28B9EB] text-white font-bold py-4 px-6 rounded-full" aria-label="Download image" on:click|stopPropagation>
+			<a href={currentImage.src} download={getFileNameFromUrl(currentImage.src)} class="flex flex-row items-center gap-4 absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-[#28B9EB] text-white font-bold py-4 px-6 rounded-full" aria-label="Download image" on:click|stopPropagation>
 				Download
 				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
