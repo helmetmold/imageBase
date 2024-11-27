@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { createClient } from '@supabase/supabase-js';
 
 	interface Image {
 		src: string;
@@ -16,19 +17,45 @@
 	const showLightbox = writable(false);
 	let currentImage: Image | null = null;
 
-	// Use Vite's import.meta.glob to import all images from a directory
-	const imageModules = import.meta.glob('/src/lib/images/**/*.{jpg,png}');
+	// Initialize Supabase client
+	const supabaseUrl = 'https://kfeprdcotfmvpfkjdthc.supabase.co'; // Replace with your Supabase URL
+	const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZXByZGNvdGZtdnBma2pkdGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE2NzM5ODMsImV4cCI6MjA0NzI0OTk4M30.BH5shEVUATHZbep-cXYlHY8FtRt-VROlP6A1-BOi5es'; // Replace with your Supabase anon key
+	const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 	onMount(async () => {
 		try {
-			const loadedImages = await Promise.all(
-				Object.keys(imageModules).map(async (path) => {
-					const category = path.split('/')[4]; // Adjust index based on your folder structure
-					return { src: path, category };
-				})
-			);
+			// List folders in 'youtube-camp-assets' to get categories
+			const { data: folders, error: folderError } = await supabase
+				.storage
+				.from('images')
+				.list('youtube-camp-assets', { limit: 100 });
 
-			images = loadedImages;
+			if (folderError) {
+				throw folderError;
+			}
+
+			// Iterate over each category folder
+			for (const folder of folders) {
+				if (folder.name) {
+					const { data: files, error: fileError } = await supabase
+						.storage
+						.from('images')
+						.list(`youtube-camp-assets/${folder.name}`, { limit: 100 });
+
+					if (fileError) {
+						console.error('Error loading files:', fileError);
+						continue;
+					}
+
+					const loadedImages = files.map(file => ({
+						src: supabase.storage.from('images').getPublicUrl(`youtube-camp-assets/${folder.name}/${file.name}`).data.publicUrl,
+						category: folder.name
+					}));
+
+					images = [...images, ...loadedImages];
+				}
+			}
+
 			console.log('Loaded images:', images);
 
 			// Extract unique categories
