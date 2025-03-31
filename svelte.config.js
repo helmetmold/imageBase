@@ -1,5 +1,8 @@
 import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,5 +17,7 @@ const config = {
 		adapter: adapter()
 	}
 };
+
+console.log('BUNNY_API_KEY:', process.env.BUNNY_API_KEY);
 
 export default config;
