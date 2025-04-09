@@ -82,16 +82,19 @@
 
 	async function handleDownload() {
 		try {
-			const response = await fetch(`https://iframe.mediadelivery.net/play/${videoID}`);
+			const response = await fetch(
+				`https://vz-2c9ec4f4-1fb.b-cdn.net/${videoID}/play_720p.mp4`
+			);
 			const blob = await response.blob();
 			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `${videoName}.mp4`; // Use the video name for the downloaded file
-			document.body.appendChild(a);
-			a.click();
+			const link = document.createElement('a');
+			const fileName = String(videoName).trim().replaceAll(' ', '_') ?? 'video';
+			link.href = url;
+			link.download = `${fileName}.mp3`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
-			document.body.removeChild(a);
 		} catch (error) {
 			console.error('Download failed:', error);
 		}
@@ -112,7 +115,7 @@
         {videoName}
     </div>
     <div class="flex gap-2">
-        <button 
+        <button
             on:click={handleDownload}
             class="p-1 hover:bg-neutral-700 rounded"
         >
@@ -124,6 +127,8 @@
         </button>
     </div>
 
+    
+    
     <iframe 
         id="bunny-stream-embed" 
         src="https://iframe.mediadelivery.net/embed/407063/{videoID}?autoplay=false" 
