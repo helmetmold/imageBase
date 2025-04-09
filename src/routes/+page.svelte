@@ -3,6 +3,11 @@
 	import { writable } from 'svelte/store';
 	import { createClient } from '@supabase/supabase-js';
 	import BunnyVideo from '$lib/components/BunnyVideo.svelte';
+	import BunnyMusic from '$lib/components/BunnyMusic.svelte';
+	import  animIcon  from '$lib/siteImages/Cartoon_Icon.webp';
+	import  VFXIcon  from '$lib/siteImages/VFX_Icon.webp';
+	import  YTGameIcon from '$lib/siteImages/Gamer_Icon.webp';
+	import  logo  from '$lib/siteImages/Logo icon.png';
 
 	interface Image {
 		src: string;
@@ -25,6 +30,14 @@
 		previewVideoIds?: string;
 	}
 
+	// Add this interface for music items
+	interface MusicItem {
+		name: string;
+		guid: string;
+		title: string;
+		duration: number;
+	}
+
 	let images: Image[] = [];
 	let categories: string[] = [];
 	let selectedCategory = 'all';
@@ -39,6 +52,8 @@
 	// State to manage the collapse of each section
 	let isImagesCollapsed = true;
 	let isVideosCollapsed = true;
+	let isMusicCollapsed = true;
+	let isSoundEffectsCollapsed = true;
 
 	// Initialize Supabase client
 	const supabaseUrl = 'https://kfeprdcotfmvpfkjdthc.supabase.co';
@@ -48,7 +63,12 @@
 	let collections: Collection[] = [];
 	let mainVideoID = ''; // Set this to the ID of the main video if needed
 	let collectionNames: string[] = [];
+	let musicCollectionNames: string[] = [];
+	let musicCollection: Collection[] = [];
 	let selectedCollection: Collection | null = null; // Track the selected collection
+
+	// Add this to your script section
+	let selectedMusic: MusicItem[] = [];
 
 	function handleThumbnailClick(videoID: string) {
 		console.log('Thumbnail clicked:', videoID);
@@ -119,7 +139,6 @@
 			if (!response.ok) throw new Error('Failed to fetch collections');
 
 			const collectionsData = await response.json();
-			console.log('Collections Data:', collectionsData);
 
 			// Access the items array within the collectionsData object
 			if (collectionsData && Array.isArray(collectionsData.items)) {
@@ -134,9 +153,28 @@
 				console.error('Expected an array but got:', collectionsData);
 				throw new Error('Invalid data format');
 			}
+
+			// Fetch music collections from Bunny.net
+			const musicResponse = await fetch('https://video.bunnycdn.com/library/407063/collections', {
+				method: 'GET',
+				headers: {
+					'AccessKey': 'ced85872-de7f-47ff-bd0298d097e0-cb07-41e3'
+				}
+			});
+
+			if (!musicResponse.ok) throw new Error('Failed to fetch music collections');
+
+			const musicCollectionsData = await musicResponse.json();
+			console.log('Music Collections Data:', musicCollectionsData);
+
+			if (musicCollectionsData && Array.isArray(musicCollectionsData.items)) {
+				musicCollectionNames = musicCollectionsData.items.map((collection: Collection) => collection.name);
+				musicCollection = musicCollectionsData.items;
+			}
 		} catch (error) {
 			console.error('Error loading collections:', error);
 			collectionNames = []; // Initialize as empty array if there's an error
+			musicCollectionNames = []; // Initialize as empty array if there's an error
 		}
 	});
 
@@ -185,15 +223,33 @@
 		if (section === 'images') {
 			isImagesCollapsed = !isImagesCollapsed;
 			isVideosCollapsed = true;
+			isMusicCollapsed = true;
+			isSoundEffectsCollapsed = true;
 		} else if (section === 'videos') {
 			isVideosCollapsed = !isVideosCollapsed;
 			isImagesCollapsed = true;
+			isMusicCollapsed = true;
+			isSoundEffectsCollapsed = true;
+		} else if (section === 'music') {
+			isMusicCollapsed = !isMusicCollapsed;
+			isImagesCollapsed = true;
+			isVideosCollapsed = true;
+			isSoundEffectsCollapsed = true;
+		} else if (section === 'soundEffects') {
+			isSoundEffectsCollapsed = !isSoundEffectsCollapsed;
+			isImagesCollapsed = true;
+			isVideosCollapsed = true;
+			isMusicCollapsed = true;
 		}
 	}
 
 	async function handleVideoCategory(collectionName: string) {
-		const collection = collections.find((c: Collection) => c.name === collectionName);
-		if (!collection) return;
+		var collection = collections.find((c: Collection) => c.name === collectionName);
+
+		if (!collection)
+		{
+			return;
+		}
 
 		isVideoLoading = true; // Set video loading state to true
 
@@ -228,106 +284,362 @@
 			isVideoLoading = false; // Reset video loading state
 		}
 	}
+
+	async function handleMusicCategory(collectionName: string) {
+		var collection = musicCollection.find((c: Collection) => c.name === collectionName);
+
+		if (!collection)
+		{
+			return;
+		}
+
+		isVideoLoading = true; // Set video loading state to true
+
+		try {
+			// Fetch videos for the selected collection
+			const response = await fetch(`https://video.bunnycdn.com/library/${collection.videoLibraryId}/videos?collection=${collection.guid}`, {
+				method: 'GET',
+				headers: {
+					'AccessKey': 'ced85872-de7f-47ff-bd0298d097e0-cb07-41e3'
+				}
+			});
+
+			if (!response.ok) throw new Error('Failed to fetch videos');
+
+			const videosData = await response.json();
+			console.log('Music Videos Data:', videosData);
+
+			// Update the selectedCollection with the fetched videos
+			selectedCollection = {
+				...collection,
+				items: videosData.items.map((video: any) => ({
+					name: video.title,
+					guid: video.guid
+					// Add other video properties as needed
+				}))
+			};
+			console.log('Updated Selected Collection:', selectedCollection);
+		} catch (error) {
+			console.error('Error loading videos:', error);
+			selectedCollection = null;
+		} finally {
+			isVideoLoading = false; // Reset video loading state
+		}
+	}
+
+	function getCategoryEmoji(category: string) {
+		const emojiMap = {
+			// Images
+			'nature': '🌿',
+			'animals': '🐾',
+			'people': '👥',
+			'food': '🍽️',
+			'travel': '✈️',
+			'business': '💼',
+			'technology': '💻',
+			'sports': '⚽',
+			'entertainment': '🎭',
+			'abstract': '🎨',
+			
+			// Videos
+			'tutorials': '📚',
+			'music': '🎵',
+			'gaming': '🎮',
+			'vlog': '📹',
+			'animation': '🎬',
+			'documentary': '🎥',
+			'education': '📖',
+			
+			// New Categories
+			'avatars': '👤',
+			'effects': '✨',
+			'explosions': '💥',
+			'face cam overlays': '📸',
+			'logos': '🎨',
+			'minecraft': '⛏️',
+			'roblox': '🎮',
+			'youtubers': '📺',
+			
+			// Music
+			'background': '🎼',
+			'soundtracks': '🎵',
+			
+			// Sound Effects
+			'ambient': '🌊',
+			'foley': '👂',
+			'ui': '🔊'
+		};
+
+		// Try to find an exact match
+		if (emojiMap[category.toLowerCase()]) {
+			return emojiMap[category.toLowerCase()];
+		}
+
+		// Try to find a partial match
+		const categoryLower = category.toLowerCase();
+		for (const [key, emoji] of Object.entries(emojiMap)) {
+			if (categoryLower.includes(key) || key.includes(categoryLower)) {
+				return emoji;
+			}
+		}
+
+		// Default emoji if no match found
+		return '📁';
+	}
 </script>
 
-<section class="flex w-full h-full">
+<section class="flex h-full">
 	<!-- Sidebar for Category Filter -->
-	<div class="sidebar w-64 bg-gray-900 text-white p-4">
-		<h2 class="text-xl font-bold mb-4">Menu</h2>
-		<div class="flex flex-col space-y-4">
-			<!-- Images Section -->
-			<div class="border-b border-gray-700">
-				<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('images')}>
-					<span>Images</span>
-					<span class="transition-transform duration-300" style="transform: rotate({isImagesCollapsed ? 0 : 180}deg);">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
-							<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
-						</svg>
-					</span>
-				</button>
-				<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isImagesCollapsed ? '0' : '1000px'};">
-					<div class="flex flex-col">
-						{#each categories as category}
-							<button
-								type="button"
-								class="p-2 border-b last:border-b-0 text-left font-bold capitalize text-lg {selectedCategory === category ? 'bg-[#28B9EB] text-white' : 'bg-gray-800 text-white'}"
-								on:click={() => selectCategory(category)}
-							>
-								{category}
+	<div class="w-64 bg-[#181818] text-white px-4 pt-12">
+		<div class="flex flex-col h-full">
+			<div class="flex gap-2 my-2 border-b border-gray-700 pb-2">
+				<img src={logo} alt="Logo" class="w-7 h-7 object-contain">
+				<h2 class="text-base mb-4 my-auto">Creator Vault</h2>
+			</div>
+			<div class="flex flex-col">
+				<div class="Images">
+					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('images')}>
+						<div class="flex items-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+							</svg>
+							<span class="text-sm">Images</span>
+						</div>
+						
+						<span class="transition-transform duration-300" style="transform: rotate({isImagesCollapsed ? 180 : 0}deg);">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+					<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isImagesCollapsed ? '0' : '1000px'};">
+						<div class="flex flex-col border-l border-gray-700 ml-6 pl-4">
+							{#each categories as category}
+								<button
+									type="button"
+									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === category ? 'bg-[#28B9EB]' : ''}"
+									on:click={() => selectCategory(category)}
+								>
+									<span class="flex items-center gap-2 justify-between">
+										<span class="capitalize">{category}</span>
+										<span class="text-base">{getCategoryEmoji(category)}</span>
+										
+									</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				</div>
+				<div class="Videos">
+					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('videos')}>
+						<div class="flex items-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06z" />
+							</svg>
+							<span class="text-sm">Videos</span>
+						</div>
+						<span class="transition-transform duration-300" style="transform: rotate({isVideosCollapsed ? 180 : 0}deg);">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+					<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isVideosCollapsed ? '0' : '1000px'};">
+						<div class="flex flex-col border-l border-gray-700 ml-6 pl-4">
+							{#each collectionNames as collectionName}
+								<button 
+									type="button" 
+									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
+									on:click={() => handleVideoCategory(collectionName)}
+								>
+									<span class="flex items-center gap-2 justify-between">
+										<span class="capitalize">{collectionName}</span>
+										<span class="text-base">{getCategoryEmoji(collectionName)}</span>
+									</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				</div>
+				<div class="Music">
+					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('music')}>
+						<div class="flex items-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" />
+							</svg>
+							<span class="text-sm">Music</span>
+						</div>
+						<span class="transition-transform duration-300" style="transform: rotate({isMusicCollapsed ? 180 : 0}deg);">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+					<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isMusicCollapsed ? '0' : '1000px'};">
+						<div class="flex flex-col border-l border-gray-700 ml-6 pl-4">
+							{#each musicCollectionNames as collectionName}
+								<button 
+									type="button" 
+									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
+									on:click={() => handleMusicCategory(collectionName)}
+								>
+									<span class="flex items-center gap-2 justify-between">
+										<span class="capitalize">{collectionName}</span>
+										<span class="text-base">{getCategoryEmoji(collectionName)}</span>
+									</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				</div>
+				<div class="SoundEffects">
+					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('soundEffects')}>
+						<div class="flex items-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" />
+							</svg>
+							<span class="text-sm">Sound Effects</span>
+						</div>
+						<span class="transition-transform duration-300" style="transform: rotate({isSoundEffectsCollapsed ? 180 : 0}deg);">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+					<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isSoundEffectsCollapsed ? '0' : '1000px'};">
+						<div class="flex flex-col border-l border-gray-700 ml-6 pl-4">
+							<button type="button" class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors">
+								<span class="flex items-center gap-2 justify-between">
+									<span>Ambient</span>
+									<span class="text-base">🌊</span>
+								</span>
 							</button>
-						{/each}
+							<button type="button" class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors">
+								<span class="flex items-center gap-2 justify-between">
+									<span>Foley</span>
+									<span class="text-base">👂</span>
+								</span>
+							</button>
+							<button type="button" class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors">
+								<span class="flex items-center gap-2 justify-between">
+									<span>UI Sounds</span>
+									<span class="text-base">🔊</span>
+								</span>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
-
-			<!-- Videos Section -->
-			<div class="border-b border-gray-700">
-				<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('videos')}>
-					<span>Videos</span>
-					<span class="transition-transform duration-300" style="transform: rotate({isVideosCollapsed ? 0 : 180}deg);">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
-							<path fill-rule="evenodd" d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
-						</svg>
-					</span>
-				</button>
-				<div class="overflow-hidden transition-all duration-300 ease-in-out" style="max-height: {isVideosCollapsed ? '0' : '1000px'};">
-					<div class="flex flex-col">
-						{#each collectionNames as collectionName}
-							<button 
-								type="button" 
-								class="p-2 border-b last:border-b-0 text-left font-bold capitalize text-lg bg-gray-800 text-white"
-								on:click={() => handleVideoCategory(collectionName)}
-							>
-								{collectionName}
-							</button>
-						{/each}
-					</div>
+			<div class="flex flex-col gap-4 mt-auto pb-6">
+				<div class="">
+					<button 
+						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
+						on:click={async () => {
+							const animatorCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56';
+							const collection = collections.find((c: Collection) => c.guid === animatorCollectionId);
+							if (collection) {
+								await handleVideoCategory(collection.name);
+							}
+						}}
+					>
+						<div class="flex items-center gap-2">
+							<img src={animIcon} alt="2D Cartoon Animators" class="w-6 h-6">
+							<span class="text-sm">2D Cartoon Animators</span>
+						</div>
+						<span class="transition-transform duration-300">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
 				</div>
-			</div>
-
-			<!-- 2D Cartoon Animators Section -->
-			<div class="border-b border-gray-700">
-				<button 
-					class="w-full flex justify-between items-center py-5 text-white" 
-					on:click={async () => {
-						const animatorCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56';
-						const collection = collections.find((c: Collection) => c.guid === animatorCollectionId);
-						if (collection) {
-							await handleVideoCategory(collection.name);
-						}
-					}}
-				>
-					<span>2D Cartoon Animators</span>
-				</button>
+				<div class="">
+					<button 
+						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
+						on:click={async () => {
+							const vfxCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56'; // Replace with actual VFX collection ID
+							const collection = collections.find((c: Collection) => c.guid === vfxCollectionId);
+							if (collection) {
+								await handleVideoCategory(collection.name);
+							}
+						}}
+					>
+						<div class="flex items-center gap-2 ">
+							<img src={VFXIcon} alt="Special Effects" class="w-6 h-6">
+							<span class="text-sm">Special Effects</span>
+						</div>
+						<span class="transition-transform duration-300">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+				</div>
+				<div class="">
+					<button 
+						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
+						on:click={async () => {
+							const gamerCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56'; // Replace with actual Gamers collection ID
+							const collection = collections.find((c: Collection) => c.guid === gamerCollectionId);
+							if (collection) {
+								await handleVideoCategory(collection.name);
+							}
+						}}
+					>
+						<div class="flex items-center gap-2">
+							<img src={YTGameIcon} alt="YouTube Gamers" class="w-6 h-6">
+							<span class="text-sm">YouTube Gamers</span>
+						</div>
+						<span class="transition-transform duration-300">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
+							</svg>
+						</span>
+					</button>
+				</div>
 			</div>
 		</div>
+		
+
 	</div>
 
 	<!-- Main Content -->
-	<div class="main-content flex-1 px-6">
+	<div class="flex-1 px-6 h-screen overflow-y-scroll">
 		{#if isLoading || isVideoLoading}
 			<!-- Loading Indicator -->
 			<div class="flex justify-center items-center h-64">
 				<div class="loader"></div>
 			</div>
 		{:else if selectedCollection}
-			<!-- Video Gallery -->
-			<div class="flex flex-col gap-4">
-				<div>
-					<h2 class="text-xl font-bold mb-4 text-white">{selectedCollection.name}</h2>
+			<!-- Video/Music Gallery -->
+			<div class="flex flex-col gap-6">
+				<div class="mt-12">
+					<h2 class="text-5xl font-bold mb-4 text-white capitalize">{selectedCollection.name}</h2>
 				</div>
 				<div class="flex flex-row flex-wrap gap-4">
-					{#each selectedCollection.items as video}
-						<BunnyVideo
-							videoID={video.guid}
-							{handleThumbnailClick}
-							{mainVideoID}
-						/>
+					{#each selectedCollection.items as item}
+						{#if musicCollectionNames.includes(selectedCollection.name)}
+							<BunnyMusic
+								videoID={item.guid}
+								{handleThumbnailClick}
+								{mainVideoID}
+								videoName={item.name}
+							/>
+						{:else}
+							<BunnyVideo
+								videoID={item.guid}
+								{handleThumbnailClick}
+								{mainVideoID}
+							/>
+						{/if}
 					{/each}
 				</div>
 			</div>
 		{:else}
 			<!-- Image Tiles -->
+			<div class="mt-12 pb-6">
+				<h2 class="text-5xl font-bold mb-4 text-white capitalize">{selectedCategory}</h2>
+			</div>
 			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-6">
 				{#each filteredImages as image}
 					<button class="relative rounded-md shadow-md bg-neutral-900 aspect-square max-w-sm" on:click={() => openLightbox(image)} aria-label="Open image lightbox">
