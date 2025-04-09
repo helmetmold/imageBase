@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
-
 	import { Star, CirclePlus, Ellipsis, Play, Pause } from '@lucide/svelte';
 
 	export let videoID: string;
@@ -83,20 +82,90 @@
 	async function handleDownload() {
 		try {
 			const response = await fetch(
-				`https://vz-2c9ec4f4-1fb.b-cdn.net/${videoID}/play_720p.mp4`
+				`https://vz-f26bc460-538.b-cdn.net/${videoID}/play_240p.mp4`
 			);
 			const blob = await response.blob();
-			const url = window.URL.createObjectURL(blob);
+			
+			// Create audio context and decode the audio
+			const audioContext = new AudioContext();
+			const arrayBuffer = await blob.arrayBuffer();
+			const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+			
+			// Create a new audio buffer with the same data
+			const offlineContext = new OfflineAudioContext(
+				audioBuffer.numberOfChannels,
+				audioBuffer.length,
+				audioBuffer.sampleRate
+			);
+			
+			const source = offlineContext.createBufferSource();
+			source.buffer = audioBuffer;
+			source.connect(offlineContext.destination);
+			source.start();
+			
+			// Render the audio to a new buffer
+			const renderedBuffer = await offlineContext.startRendering();
+			
+			// Convert to WAV format
+			const wavBlob = audioBufferToWav(renderedBuffer);
+			const url = window.URL.createObjectURL(wavBlob);
+			
 			const link = document.createElement('a');
 			const fileName = String(videoName).trim().replaceAll(' ', '_') ?? 'video';
 			link.href = url;
-			link.download = `${fileName}.mp3`;
+			link.download = `${fileName}.wav`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download failed:', error);
+		}
+	}
+
+	function audioBufferToWav(buffer: AudioBuffer) {
+		const numChannels = buffer.numberOfChannels;
+		const sampleRate = buffer.sampleRate;
+		const format = 1; // PCM
+		const bitDepth = 16;
+		
+		const bytesPerSample = bitDepth / 8;
+		const blockAlign = numChannels * bytesPerSample;
+		
+		const wav = new Uint8Array(44 + buffer.length * blockAlign);
+		
+		// Write WAV header
+		const view = new DataView(wav.buffer);
+		writeString(view, 0, 'RIFF');
+		view.setUint32(4, 36 + buffer.length * blockAlign, true);
+		writeString(view, 8, 'WAVE');
+		writeString(view, 12, 'fmt ');
+		view.setUint32(16, 16, true);
+		view.setUint16(20, format, true);
+		view.setUint16(22, numChannels, true);
+		view.setUint32(24, sampleRate, true);
+		view.setUint32(28, sampleRate * blockAlign, true);
+		view.setUint16(32, blockAlign, true);
+		view.setUint16(34, bitDepth, true);
+		writeString(view, 36, 'data');
+		view.setUint32(40, buffer.length * blockAlign, true);
+		
+		// Write audio data for all channels
+		const offset = 44;
+		for (let channel = 0; channel < numChannels; channel++) {
+			const channelData = buffer.getChannelData(channel);
+			for (let i = 0; i < channelData.length; i++) {
+				const sample = Math.max(-1, Math.min(1, channelData[i]));
+				view.setInt16(offset + (i * numChannels + channel) * 2, sample * 0x7FFF, true);
+			}
+		}
+		
+		return new Blob([wav], { type: 'audio/wav' });
+	}
+
+	function writeString(view: DataView, offset: number, string: string) {
+		for (let i = 0; i < string.length; i++) {
+			view.setUint8(offset + i, string.charCodeAt(i));
 		}
 	}
 </script>
@@ -150,3 +219,4 @@
 		@apply border-green-500;
 	}
 </style>
+
