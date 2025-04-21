@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPad Rental Report - By Session</title>
+    <style>
+        /* Define accent color */
+        :root {
+            --accent-color: #28b9eb;
+            --accent-color-light: #eafaff; /* Lighter shade for backgrounds */
+            --accent-color-dark: #1e8dbb;  /* Darker shade for hover/active */
+            --text-on-accent: #ffffff;     /* Text color on accent background */
+            --text-color: #333;
+            --border-color: #ccc;
+            --border-color-light: #ddd;
+            --background-color: #f4f4f4;
+            --background-color-alt: #ebebeb;
+            --table-header-text: #ffffff;
+            /* Utilization Bar Colors */
+            --utilization-bar-bg: #c5cecf;
+            --utilization-bar-normal: #4caf50; /* Green */
+            --utilization-bar-high: #ff9800;   /* Orange */
+            --utilization-bar-full: #f44336;   /* Red */
+            --utilization-text-color: #ffffff;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent-color-dark);
+        }
+
+        .tab-container {
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background-color: #e9e9e9; /* Neutral tab bar */
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .tab-container button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: background-color 0.3s, color 0.3s;
+            font-size: 1em;
+            border-right: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .tab-container button:last-child {
+            border-right: none;
+        }
+
+        .tab-container button:hover {
+            background-color: var(--accent-color-light);
+            color: var(--accent-color-dark);
+        }
+
+        .tab-container button.active {
+            background-color: var(--accent-color);
+            color: var(--text-on-accent);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            background-color: white;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 0.5s; /* Fading effect */
+        }
+
+        /* Fade effect */
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--accent-color-dark);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+
+        p.rental-cap {
+            font-weight: bold;
+            margin-bottom: 15px;
+            background-color: var(--accent-color-light);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color-dark);
+        }
+         p.rental-cap span {
+             font-weight: normal;
+             font-size: 0.9em;
+             color: #555; /* Keep secondary text neutral */
+         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color-light);
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle; /* Align cell content vertically */
+        }
+
+        th {
+            background-color: var(--accent-color);
+            color: var(--table-header-text);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--background-color-alt);
+        }
+
+        /* Optional: Style for session type column */
+        td.session-type-3day,
+        td.session-type-2day,
+        td.session-type-unknown {
+             font-style: italic;
+        }
+         td.session-type-unknown {
+             color: #757575;
+         }
+
+         /* --- Utilization Bar Styles --- */
+        .utilization-bar-container {
+            width: 100px; /* Adjust width as needed */
+            height: 18px; /* Slightly taller */
+            background-color: var(--utilization-bar-bg);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative; /* For positioning text */
+            display: inline-block; /* Prevent taking full cell width */
+        }
+
+        .utilization-bar {
+            height: 100%;
+            background-color: var(--utilization-bar-normal); /* Default green */
+            border-radius: 3px 0 0 3px;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .utilization-bar.high {
+             background-color: var(--utilization-bar-high); /* Orange */
+        }
+
+         .utilization-bar.full {
+             background-color: var(--utilization-bar-full); /* Red */
+             border-radius: 3px; /* Full bar should have rounded corners on right too */
+         }
+
+        .utilization-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--utilization-text-color);
+            mix-blend-mode: screen; /* Improves visibility on dark bars */
+            white-space: nowrap;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>iPad Rental Report - By Session</h1>
+
+<div id="tab-container" class="tab-container">
+    </div>
+
+<div id="tab-content-container">
+    </div>
+
+<script>
+    // LEAVE THIS EMPTY. Paste your JSON data array here when ready.
+     const reportData = [{"locationId":"9052102656299","productTitle":"Montrose St. Stephens","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":0},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":0},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":4},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":0},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":2},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":1},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":2},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":2},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":1},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":1},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":2},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":1},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":1},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":1}]},{"locationId":"9840746168619","productTitle":"Katy Flagship","rentalCap":10,"sessions":[{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":5},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":5},{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":5},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":6},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":6},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":2},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":3},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":3},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":0},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":1},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":7},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":3},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":3},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":4},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":2},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":3},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":0},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0}]},{"locationId":"9840891396395","productTitle":"Cypress HUB","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":1},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":0},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":1},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":1},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":1},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":0},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":0},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":2},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":0},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":2},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":0}]},{"locationId":"9840962142507","productTitle":"Austin Glad Tidings","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":4},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":3},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":7},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":7},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":3},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":4},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":5},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":1},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":1},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":2},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":3},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":2},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":3},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":0},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0}]},{"locationId":"9840964305195","productTitle":"Austin Gateway South","rentalCap":10,"sessions":[{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":2},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":2},{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":2},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":5},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":3},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":2},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":3},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":2},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":2},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":5},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":5},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":4},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":2},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":3},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":3},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":1},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":1},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":2},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":1}]},{"locationId":"9840965550379","productTitle":"South Lake Clariden School","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":0},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":1},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":6},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":2},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":4},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":4},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":3},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":0},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":3},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":2},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":5},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":6},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":0},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":1},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":3},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":3}]},{"locationId":"9840967844139","productTitle":"CAST Tech High School","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":2},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":1},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":0},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":1},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":5},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":3},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":0},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":1},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":1},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":2},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":2},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0}]},{"locationId":"9840968663339","productTitle":"Templeton Academy DC","rentalCap":10,"sessions":[{"startDate":"2025-08-14","endDate":"2025-08-15","ipadRentals":2},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":1},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":2},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":0},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":1},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":1},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":1},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":2},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0},{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":0},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":0},{"startDate":"2025-08-11","endDate":"2025-08-13","ipadRentals":1}]},{"locationId":"9840973447467","productTitle":"The Woodlands","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":0},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":2},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":1},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":4},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":3},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":2},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":4},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":1},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":0},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":1},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":1},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":0},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":2},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":3},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":3},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":3},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0},{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":0},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":0}]},{"locationId":"9840975118635","productTitle":"Lake Travis Methodist Church","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":1},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":2},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":3},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":0},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":2},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":2},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":0},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":0},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":3},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":0},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":0},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":1},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0},{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":1},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":0}]},{"locationId":"9840975216939","productTitle":"Cedar Park Exchange ATX","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":6},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":4},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":3},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":3},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":1},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":3},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":1},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":2},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":4},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":2},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":3},{"startDate":"2025-08-04","endDate":"2025-08-06","ipadRentals":2},{"startDate":"2025-08-07","endDate":"2025-08-08","ipadRentals":0}]},{"locationId":"9840975544619","productTitle":"Alamo Heights United Church","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":1},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":0},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":4},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":1},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":2},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":2},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":1},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":0},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":0},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":0},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":1},{"startDate":"2025-07-31","endDate":"2025-08-01","ipadRentals":0}]},{"locationId":"9883934425387","productTitle":"San Antonio Covenant Church","rentalCap":10,"sessions":[{"startDate":"2025-06-02","endDate":"2025-06-04","ipadRentals":0},{"startDate":"2025-06-05","endDate":"2025-06-06","ipadRentals":0},{"startDate":"2025-06-09","endDate":"2025-06-11","ipadRentals":1},{"startDate":"2025-06-12","endDate":"2025-06-13","ipadRentals":0},{"startDate":"2025-06-16","endDate":"2025-06-18","ipadRentals":0},{"startDate":"2025-06-19","endDate":"2025-06-20","ipadRentals":0},{"startDate":"2025-06-23","endDate":"2025-06-25","ipadRentals":0},{"startDate":"2025-06-26","endDate":"2025-06-27","ipadRentals":0},{"startDate":"2025-06-30","endDate":"2025-07-02","ipadRentals":1},{"startDate":"2025-07-07","endDate":"2025-07-09","ipadRentals":0},{"startDate":"2025-07-10","endDate":"2025-07-11","ipadRentals":0},{"startDate":"2025-07-14","endDate":"2025-07-16","ipadRentals":1},{"startDate":"2025-07-17","endDate":"2025-07-18","ipadRentals":0},{"startDate":"2025-07-21","endDate":"2025-07-23","ipadRentals":0},{"startDate":"2025-07-24","endDate":"2025-07-25","ipadRentals":0},{"startDate":"2025-07-28","endDate":"2025-07-30","ipadRentals":0}]}];
+
+    // Function to determine session type based on start date's day of the week
+    function getSessionType(startDateStr) {
+        try {
+            // Add timezone offset hint if dates are local, otherwise assumes UTC
+            const date = new Date(startDateStr + 'T00:00:00');
+            const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+            if (dayOfWeek === 1) { // Monday
+                return { text: "3 Day", class: "session-type-3day" };
+            } else if (dayOfWeek === 4) { // Thursday
+                return { text: "2 Day", class: "session-type-2day" };
+            } else {
+                return { text: "Unknown", class: "session-type-unknown" };
+            }
+        } catch (e) {
+            console.error("Error parsing date for session type:", startDateStr, e);
+            return { text: "Error", class: "session-type-unknown" };
+        }
+    }
+
+
+    // Function to render the report based on individual sessions
+    function renderReport(locations) {
+        const tabContainer = document.getElementById('tab-container');
+        const tabContentContainer = document.getElementById('tab-content-container');
+
+        tabContainer.innerHTML = '';
+        tabContentContainer.innerHTML = '';
+
+        if (!locations || locations.length === 0) {
+             console.warn("No report data provided. Please paste data into the 'reportData' variable.");
+             tabContentContainer.innerHTML = '<p style="text-align: center; padding: 20px; background: #fff; border: 1px solid #ccc;">No data loaded. Please paste the report data into the script.</p>';
+             return;
+        }
+
+
+        locations.forEach((location, index) => {
+            const locationIdSafe = `location-${index}`;
+            const sessionCap = location.rentalCap || 0; // Cap per session block
+
+            // Create Tab Button
+            const button = document.createElement('button');
+            button.className = 'tablinks';
+            button.textContent = location.productTitle || `Location ${index + 1}`;
+            button.setAttribute('data-target', locationIdSafe);
+            button.onclick = (event) => openTab(event, locationIdSafe);
+            tabContainer.appendChild(button);
+
+            // Create Tab Content Pane
+            const contentDiv = document.createElement('div');
+            contentDiv.id = locationIdSafe;
+            contentDiv.className = 'tab-content';
+
+            // Add Location Title and Session Cap Info
+            const title = document.createElement('h2');
+            title.textContent = location.productTitle || `Location ${index + 1}`;
+            contentDiv.appendChild(title);
+
+            const capInfo = document.createElement('p');
+            capInfo.className = 'rental-cap';
+            capInfo.innerHTML = `Rental Cap per Session Block: <strong>${sessionCap}</strong>`;
+            contentDiv.appendChild(capInfo);
+
+            // Create Table for Session Data
+            const table = document.createElement('table');
+            const thead = table.createTHead();
+            const headerRow = thead.insertRow();
+            // Add Utilization Header back
+            const headers = ['Start Date', 'End Date', 'Session Type', 'iPad Rentals', 'Session Cap', 'Utilization (%)'];
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+
+            // Sort sessions by start date before rendering
+            const sessions = location.sessions || [];
+            sessions.sort((a, b) => {
+                 if (!a.startDate || !b.startDate) return 0;
+                 return a.startDate.localeCompare(b.startDate);
+            });
+
+
+            if (sessions.length === 0) {
+                const row = tbody.insertRow();
+                const cell = row.insertCell();
+                // Update colspan to match new number of headers
+                cell.colSpan = headers.length;
+                cell.textContent = 'No session data available for this location.';
+                cell.style.textAlign = 'center';
+                cell.style.fontStyle = 'italic';
+            } else {
+                 sessions.forEach(session => {
+                    const row = tbody.insertRow();
+                    const rentals = (typeof session.ipadRentals === 'number') ? session.ipadRentals : 0; // Default rentals to 0 if missing
+
+                    // --- Standard Cells ---
+                    const startDateCell = row.insertCell();
+                    startDateCell.textContent = session.startDate || 'N/A';
+
+                    const endDateCell = row.insertCell();
+                    endDateCell.textContent = session.endDate || 'N/A';
+
+                    const sessionTypeData = getSessionType(session.startDate);
+                    const sessionTypeCell = row.insertCell();
+                    sessionTypeCell.textContent = sessionTypeData.text;
+                    sessionTypeCell.classList.add(sessionTypeData.class);
+
+                    const rentalsCell = row.insertCell();
+                    rentalsCell.textContent = rentals; // Display actual rentals number (or 0 if missing)
+
+                    const capCell = row.insertCell();
+                    capCell.textContent = sessionCap;
+
+                    // --- Utilization Cell (with Bar) ---
+                    const utilizationCell = row.insertCell();
+                    const utilization = sessionCap > 0 ? Math.min(100, (rentals / sessionCap) * 100) : 0; // Calculate utilization, cap bar at 100%
+
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'utilization-bar-container';
+
+                    const bar = document.createElement('div');
+                    bar.className = 'utilization-bar';
+                    bar.style.width = `${utilization}%`; // Set bar width
+
+                    // Add color classes based on utilization level
+                     if (utilization >= 99.9) { // Use 99.9 to handle potential float issues near 100%
+                         bar.classList.add('full');
+                     } else if (utilization >= 75) { // Threshold for 'high' utilization
+                         bar.classList.add('high');
+                     }
+
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'utilization-text';
+                    textSpan.textContent = `${utilization.toFixed(1)}%`; // Display percentage text
+
+                    barContainer.appendChild(bar);
+                    barContainer.appendChild(textSpan);
+                    utilizationCell.appendChild(barContainer); // Add bar to the cell
+                 });
+            }
+
+            contentDiv.appendChild(table);
+            tabContentContainer.appendChild(contentDiv);
+        });
+
+        // Activate the first tab by default if locations exist
+        if (locations.length > 0 && tabContainer.firstChild) {
+            tabContainer.firstChild.click();
+        }
+    }
+
+    // Function to handle tab switching (remains the same)
+    function openTab(evt, tabName) {
+        const tabcontent = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].classList.remove('active');
+        }
+
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove('active');
+        }
+
+        const targetContent = document.getElementById(tabName);
+        if (targetContent) {
+             targetContent.classList.add('active');
+        }
+         if (evt && evt.currentTarget) {
+           evt.currentTarget.classList.add('active');
+         }
+    }
+
+    // Initial setup on DOM content loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        renderReport(reportData);
+    });
+
+</script>
+
+</body>
+</html>
