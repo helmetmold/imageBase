@@ -82,13 +82,13 @@
 	on:touchstart={handleTouchStart}
 	on:touchend={handleTouchEnd}
 	on:touchcancel={handleTouchEnd}
-	class="relative flex flex-col gap-2 rounded-md max-w-56"
+	class="relative flex flex-col gap-2 rounded-md w-full max-w-full sm:max-w-56"
 >
-	<button class="cursor-pointer">
+	<button class="cursor-pointer w-full">
 		<img
 			src={imageSrc}
 			alt="Video Thumbnail"
-			class="object-fit w-[200px] rounded-md shadow-md"
+			class="object-fit w-full sm:w-[200px] rounded-md shadow-md"
 		/>
 	</button>
 </div>

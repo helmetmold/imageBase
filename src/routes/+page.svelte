@@ -8,6 +8,8 @@
 	import  VFXIcon  from '$lib/siteImages/VFX_Icon.webp';
 	import  YTGameIcon from '$lib/siteImages/Gamer_Icon.webp';
 	import  logo  from '$lib/siteImages/Logo icon.png';
+	import { page } from '$app/stores';
+	import { Menu } from '@lucide/svelte';
 
 	interface Image {
 		src: string;
@@ -69,6 +71,36 @@
 
 	// Add this to your script section
 	let selectedMusic: MusicItem[] = [];
+
+	// Add this new state variable
+	let isSidebarOpen = false;
+
+	// Add this new state variable
+	let isScrolled = false;
+
+	// Add this function to handle scroll events
+	function handleScroll() {
+		isScrolled = window.scrollY > 0;
+	}
+
+	// Add this function to handle sidebar toggle
+	function toggleSidebar() {
+		isSidebarOpen = !isSidebarOpen;
+	}
+
+	// Add this function to handle URL parameters
+	function handleCategoryFromUrl() {
+		const category = $page.url.searchParams.get('category');
+		if (category) {
+			if (categories.includes(category)) {
+				selectCategory(category);
+			} else if (collectionNames.includes(category)) {
+				handleVideoCategory(category);
+			} else if (musicCollectionNames.includes(category)) {
+				handleMusicCategory(category);
+			}
+		}
+	}
 
 	function handleThumbnailClick(videoID: string) {
 		console.log('Thumbnail clicked:', videoID);
@@ -176,6 +208,19 @@
 			collectionNames = []; // Initialize as empty array if there's an error
 			musicCollectionNames = []; // Initialize as empty array if there's an error
 		}
+
+		// Call this when the component mounts
+		handleCategoryFromUrl();
+
+		// Initialize scroll state
+		handleScroll();
+		
+		// Add scroll event listener
+		window.addEventListener('scroll', handleScroll);
+		
+		return () => {
+			window.removeEventListener('scroll', handleScroll);
+		};
 	});
 
 	// Reactive statement to ensure re-render
@@ -371,8 +416,8 @@
 		};
 
 		// Try to find an exact match
-		if (emojiMap[category.toLowerCase()]) {
-			return emojiMap[category.toLowerCase()];
+		if (category.toLowerCase() in emojiMap) {
+			return emojiMap[category.toLowerCase() as keyof typeof emojiMap];
 		}
 
 		// Try to find a partial match
@@ -389,10 +434,19 @@
 </script>
 
 <section class="flex h-full">
+	<!-- Mobile Menu Button -->
+	<button 
+		class="fixed top-2 left-4 z-50 md:hidden p-2 rounded-md transition-colors duration-200 {isScrolled ? 'bg-black/80' : ''}"
+		on:click={toggleSidebar}
+	>	
+		<Menu class="w-12 h-12 text-white" />
+		
+	</button>
+
 	<!-- Sidebar for Category Filter -->
-	<div class="w-64 bg-[#181818] text-white px-4 pt-12">
+	<div class="w-64 bg-[#181818] text-white px-4 pt-12 fixed md:relative h-full transition-transform duration-300 ease-in-out transform {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 z-40">
 		<div class="flex flex-col h-full">
-			<div class="flex gap-2 my-2 border-b border-gray-700 pb-2">
+			<div class="flex gap-2 my-2 border-b mt-6 sm:mt-0 border-gray-700 pb-2">
 				<img src={logo} alt="Logo" class="w-7 h-7 object-contain">
 				<h2 class="text-base mb-4 my-auto">Creator Vault</h2>
 			</div>
@@ -418,7 +472,11 @@
 								<button
 									type="button"
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === category ? 'bg-[#28B9EB]' : ''}"
-									on:click={() => selectCategory(category)}
+									on:click={() => {
+										selectCategory(category);
+										// Update URL without page reload
+										history.pushState({}, '', `?category=${category}`);
+									}}
 								>
 									<span class="flex items-center gap-2 justify-between">
 										<span class="capitalize">{category}</span>
@@ -450,7 +508,11 @@
 								<button 
 									type="button" 
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
-									on:click={() => handleVideoCategory(collectionName)}
+									on:click={() => {
+										handleVideoCategory(collectionName);
+										// Update URL without page reload
+										history.pushState({}, '', `?category=${collectionName}`);
+									}}
 								>
 									<span class="flex items-center gap-2 justify-between">
 										<span class="capitalize">{collectionName}</span>
@@ -481,7 +543,11 @@
 								<button 
 									type="button" 
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
-									on:click={() => handleMusicCategory(collectionName)}
+									on:click={() => {
+										handleMusicCategory(collectionName);
+										// Update URL without page reload
+										history.pushState({}, '', `?category=${collectionName}`);
+									}}
 								>
 									<span class="flex items-center gap-2 justify-between">
 										<span class="capitalize">{collectionName}</span>
@@ -532,15 +598,9 @@
 			</div>
 			<div class="flex flex-col gap-4 mt-auto pb-6">
 				<div class="">
-					<button 
+					<a 
 						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
-						on:click={async () => {
-							const animatorCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56';
-							const collection = collections.find((c: Collection) => c.guid === animatorCollectionId);
-							if (collection) {
-								await handleVideoCategory(collection.name);
-							}
-						}}
+						href="/2D-cartoon-animators"
 					>
 						<div class="flex items-center gap-2">
 							<img src={animIcon} alt="2D Cartoon Animators" class="w-6 h-6">
@@ -551,18 +611,12 @@
 								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
 							</svg>
 						</span>
-					</button>
+					</a>
 				</div>
 				<div class="">
-					<button 
+					<a
 						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
-						on:click={async () => {
-							const vfxCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56'; // Replace with actual VFX collection ID
-							const collection = collections.find((c: Collection) => c.guid === vfxCollectionId);
-							if (collection) {
-								await handleVideoCategory(collection.name);
-							}
-						}}
+						href="/special-effects"
 					>
 						<div class="flex items-center gap-2 ">
 							<img src={VFXIcon} alt="Special Effects" class="w-6 h-6">
@@ -573,18 +627,12 @@
 								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
 							</svg>
 						</span>
-					</button>
+					</a>
 				</div>
 				<div class="">
-					<button 
+					<a 
 						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
-						on:click={async () => {
-							const gamerCollectionId = '2701dfe5-2cb7-46f0-ba1d-ac1022fe9e56'; // Replace with actual Gamers collection ID
-							const collection = collections.find((c: Collection) => c.guid === gamerCollectionId);
-							if (collection) {
-								await handleVideoCategory(collection.name);
-							}
-						}}
+						href="/youtube-gamers"
 					>
 						<div class="flex items-center gap-2">
 							<img src={YTGameIcon} alt="YouTube Gamers" class="w-6 h-6">
@@ -595,13 +643,21 @@
 								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
 							</svg>
 						</span>
-					</button>
+					</a>
 				</div>
 			</div>
 		</div>
 		
 
 	</div>
+
+	<!-- Overlay for mobile -->
+	{#if isSidebarOpen}
+		<div 
+			class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+			on:click={toggleSidebar}
+		></div>
+	{/if}
 
 	<!-- Main Content -->
 	<div class="flex-1 px-6 h-screen overflow-y-scroll">
@@ -614,7 +670,7 @@
 			<!-- Video/Music Gallery -->
 			<div class="flex flex-col gap-6">
 				<div class="mt-12">
-					<h2 class="text-5xl font-bold mb-4 text-white capitalize">{selectedCollection.name}</h2>
+					<h2 class="text-5xl mt-24 sm:mt-0 font-bold mb-4 text-white capitalize">{selectedCollection.name}</h2>
 				</div>
 				<div class="flex flex-row flex-wrap gap-4">
 					{#each selectedCollection.items as item}
@@ -638,7 +694,7 @@
 		{:else}
 			<!-- Image Tiles -->
 			<div class="mt-12 pb-6">
-				<h2 class="text-5xl font-bold mb-4 text-white capitalize">{selectedCategory}</h2>
+				<h2 class="text-5xl mt-24 sm:mt-0 font-bold mb-4 text-white capitalize">{selectedCategory}</h2>
 			</div>
 			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-6">
 				{#each filteredImages as image}
@@ -699,5 +755,10 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 		gap: 16px;
+	}
+
+	/* Add this to handle body scroll when sidebar is open */
+	:global(body) {
+		overflow: var(--body-overflow, auto);
 	}
 </style>
