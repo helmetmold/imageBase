@@ -439,11 +439,7 @@
 	}
 </script>
 
-<<<<<<< HEAD
 <section class="flex h-screen">
-=======
-<section class="flex h-full">
->>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 	<!-- Mobile Menu Button -->
 	<button 
 		class="fixed top-2 left-4 z-50 md:hidden p-2 rounded-md transition-colors duration-200 {isScrolled ? 'bg-black/80' : ''}"
@@ -455,11 +451,7 @@
 
 	<!-- Sidebar for Category Filter -->
 	<div class="w-64 bg-[#181818] text-white px-4 pt-12 fixed md:relative h-full transition-transform duration-300 ease-in-out transform {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 z-40">
-<<<<<<< HEAD
 		<div class="flex flex-col h-full overflow-y-auto">
-=======
-		<div class="flex flex-col h-full">
->>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 			<div class="flex gap-2 my-2 border-b mt-6 sm:mt-0 border-gray-700 pb-2">
 				<img src={logo} alt="Logo" class="w-7 h-7 object-contain">
 				<h2 class="text-base mb-4 my-auto">Creator Vault</h2>
@@ -488,10 +480,7 @@
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === category ? 'bg-[#28B9EB]' : ''}"
 									on:click={() => {
 										selectCategory(category);
-<<<<<<< HEAD
 										toggleSidebar();
-=======
->>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 										// Update URL without page reload
 										history.pushState({}, '', `?category=${category}`);
 									}}
@@ -528,10 +517,7 @@
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
 									on:click={() => {
 										handleVideoCategory(collectionName);
-<<<<<<< HEAD
 										toggleSidebar();
-=======
->>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 										// Update URL without page reload
 										history.pushState({}, '', `?category=${collectionName}`);
 									}}
@@ -567,10 +553,7 @@
 									class="px-2 py-1 text-left font-medium text-sm text-white hover:bg-[#28B9EB] rounded-md transition-colors {selectedCategory === collectionName ? 'bg-[#28B9EB]' : ''}"
 									on:click={() => {
 										handleMusicCategory(collectionName);
-<<<<<<< HEAD
 										toggleSidebar();
-=======
->>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 										// Update URL without page reload
 										history.pushState({}, '', `?category=${collectionName}`);
 									}}
