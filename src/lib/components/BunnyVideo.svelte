@@ -60,6 +60,7 @@
 		console.log("Store changed:", $currentlyPlayingStore);
 	}
 </script>
+<<<<<<< HEAD
 <div class="video-container" data-video-id={videoID}>
 	<div
 		on:click={handleClick}
@@ -89,6 +90,24 @@
 			</button>
 		</div>
 	{/if}
+=======
+
+<div
+	on:mouseenter={handleMouseEnter}
+	on:mouseleave={handleMouseLeave}
+	on:touchstart={handleTouchStart}
+	on:touchend={handleTouchEnd}
+	on:touchcancel={handleTouchEnd}
+	class="relative flex flex-col gap-2 rounded-md w-full max-w-full sm:max-w-56"
+>
+	<button class="cursor-pointer w-full">
+		<img
+			src={imageSrc}
+			alt="Video Thumbnail"
+			class="object-fit w-full sm:w-[200px] rounded-md shadow-md"
+		/>
+	</button>
+>>>>>>> a715fbcbf7355ff20f7101dc9196dbb53bc6c6f8
 </div>
 
 
