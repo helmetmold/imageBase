@@ -25,7 +25,6 @@
                     YouTube Gamers
                 </h2>
             </div>
-            
     
             <div class="flex flex-col gap-4 z-10">
                 <h3 class="text-3xl font-bold text-white capitalize">Logos</h3>

@@ -41,7 +41,6 @@
 	}
 
 	function handleFullVideo() {
-		console.log('handleFullVideo called');
 		isPopupOpen = true;
 	}
 
@@ -80,7 +79,6 @@
 		>
 			<button 
 				on:click|stopPropagation={() => {
-					console.log('Play button clicked');
 					handleFullVideo();
 				}}
 				class="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-md hover:bg-blue-700 transition-colors w-full"

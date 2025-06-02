@@ -5,6 +5,27 @@
     import Meteors from '$lib/components/meteors.svelte';
     import Backgroundbeams from '$lib/components/Backgroundbeams.svelte';
     import Logos from '$lib/siteImages/Small_Preview_Free_Gaming_Logos_Templates.jpg';
+
+    // Add download function
+    async function handleDownload(videoId: string, videoTitle: string) {
+        try {
+            const response = await fetch(
+                `https://vz-0ec947d1-b25.b-cdn.net/${videoId}/play_720p.mp4`
+            );
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const videoName = String(videoTitle).trim() ?? 'video';
+            link.href = url;
+            link.download = `${videoName}.mp4`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download failed:', error);
+        }
+    }
 </script>
 
 <!-- Background layer -->
@@ -21,25 +42,11 @@
                     <ArrowLeft class="w-6 h-6" />
                     Back
                 </a>
-                <h2 class="inter-var text-4xl font-bold text-white">
-                    2D Cartoon Animators
-                </h2>
+                
             </div>
-            
-    
-            <div class="flex flex-col gap-4 z-10">
-                <h3 class="text-3xl font-bold text-white capitalize">Creator Camp Rocket</h3>
-                <div class="flex flex-row gap-12">
-                    <div class="w-[500px] h-[300px]"><iframe src="https://iframe.mediadelivery.net/embed/402442/60996fc9-6edf-4d09-8a27-fd01660bb68b?autoplay=false&loop=false&muted=false&preload=false&responsive=true" loading="lazy" style="height:100%;width:100%;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" allowfullscreen="true"></iframe></div>
-                    <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
-                            Download
-                            <Download class="w-4 h-4" />
-                        </a>
-                    </div>
-                    
-                </div>
-            </div>
+            <h2 class="inter-var text-4xl font-bold text-white">
+                2D Cartoon Animators
+            </h2>
             <div class="flex flex-col gap-4 z-10">
                 <h3 class="text-3xl font-bold text-white capitalize">Name Animation</h3>
             </div>
@@ -52,14 +59,35 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('c576cf6a-5e92-422f-b767-e17abcd66415', 'Name Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
-
+            
+            
+    
+            <div class="flex flex-col gap-4 z-10">
+                <h3 class="text-3xl font-bold text-white capitalize">Creator Camp Rocket</h3>
+                <div class="flex flex-row gap-12">
+                    <div class="w-[500px] h-[300px]"><iframe src="https://iframe.mediadelivery.net/embed/402442/60996fc9-6edf-4d09-8a27-fd01660bb68b?autoplay=false&loop=false&muted=false&preload=false&responsive=true" loading="lazy" style="height:100%;width:100%;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" allowfullscreen={true}></iframe></div>
+                    <div class="flex flex-col gap-4">
+                        <button 
+                            on:click={() => handleDownload('60996fc9-6edf-4d09-8a27-fd01660bb68b', 'Creator Camp Rocket')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
+                            Download
+                            <Download class="w-4 h-4" />
+                        </button>
+                    </div>
+                    
+                </div>
+            </div>
             <div class="flex flex-col gap-4 z-10">
                 <div class="flex flex-row gap-12">
                     <div class="w-[500px]">
@@ -68,10 +96,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('97e62081-a1c3-4a6b-9ee0-4832ce81c030', 'Name Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -84,10 +115,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('0d0bb70b-13a1-4cf7-a3af-855f15c365a2', 'Name Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -105,10 +139,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('2a0bd8d5-2b3e-45bb-ae27-0c1a9bd59013', 'Character Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -121,10 +158,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('3854d7f1-8a8e-4cb9-8345-5423dbd9a965', 'Character Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -137,10 +177,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('1f484d61-1435-4cc0-803b-0d1c2411cf08', 'Character Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -153,10 +196,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('161e286d-9f86-4f74-8a26-1ee9c54ec129', 'Character Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -172,10 +218,13 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
-                        <a href="/tier-list" download class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors">
+                        <button 
+                            on:click={() => handleDownload('4bb733ec-3956-4964-af3d-71ff2c0b2c42', 'Character Animation')}
+                            class="bg-[#28B9EB] text-white font-bold px-4 py-2 my-auto rounded-md flex flex-row gap-2 items-center hover:bg-[#1a9bc7] transition-colors"
+                        >
                             Download
                             <Download class="w-4 h-4" />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>

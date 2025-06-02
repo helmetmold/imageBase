@@ -4,23 +4,20 @@
 	import { Star, CirclePlus, Ellipsis, Play, Pause } from '@lucide/svelte';
 
 	export let videoID: string;
-	export let handleThumbnailClick: (videoID: string) => void;
-	export let mainVideoID: string;
 	export let videoName: string;
-
-	console.log(videoName);
 
 	const selected = writable(false);
 	let player: any;
 	let isPlaying = writable(false);
 	let isInitialized = false;
+	let iframeLoaded = false;
+
+	// Create unique iframe ID for each component
+	const iframeId = `bunny-stream-embed-${videoID}`;
 
 	onMount(() => {
-		// Load Player.js script
-		const script = document.createElement('script');
-		script.src = '//assets.mediadelivery.net/playerjs/player-0.1.0.min.js';
-		script.onload = initializePlayer;
-		document.head.appendChild(script);
+		// Player.js is now loaded globally in app.html
+		initializePlayer();
 
 		// Add visibility change handler
 		const handleVisibilityChange = () => {
@@ -42,16 +39,17 @@
 	});
 
 	function handlePlayPause() {
-		if (!isInitialized) {
-			initializePlayer();
-			isInitialized = true;
+		if (!iframeLoaded) {
+			iframeLoaded = true;
+			// Wait for iframe to load before initializing
+			setTimeout(initializePlayer, 100);
 		}
 		
 		if (player) {
 			if ($isPlaying) {
 				player.pause();
 			} else {
-				player.play().catch(error => {
+				player.play().catch((error: Error) => {
 					console.log('Playback failed:', error);
 					isPlaying.set(false);
 				});
@@ -60,7 +58,7 @@
 	}
 
 	function initializePlayer() {
-		const iframe = document.getElementById('bunny-stream-embed');
+		const iframe = document.getElementById(iframeId);
 		if (iframe) {
 			player = new (window as any).playerjs.Player(iframe);
 			
@@ -173,13 +171,13 @@
 <div
 	class="relative flex gap-2 p-3 items-center rounded-md w-full bg-neutral-800 text-white justify-between"
 >
-    <div on:click={handlePlayPause} class="cursor-pointer">
+    <button on:click={handlePlayPause} class="cursor-pointer bg-transparent border-none p-0" aria-label="Play/Pause audio">
         {#if $isPlaying}
             <Pause class="w-4 h-4" />
         {:else}
             <Play class="w-4 h-4" />
         {/if}
-    </div>
+    </button>
     <div class="text-base font-bold">
         {videoName}
     </div>
@@ -187,6 +185,7 @@
         <button
             on:click={handleDownload}
             class="p-1 hover:bg-neutral-700 rounded"
+            aria-label="Download audio file"
         >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -196,27 +195,16 @@
         </button>
     </div>
 
-    
-    
-    <iframe 
-        id="bunny-stream-embed" 
-        src="https://iframe.mediadelivery.net/embed/407063/{videoID}?autoplay=false" 
-        width="0" 
-        height="0" 
-        frameborder="0" 
-        style="display: none;"
-        title="Audio player"
-        allow="autoplay"
-    />
+    {#if iframeLoaded}
+        <iframe 
+            id={iframeId}
+            src="https://iframe.mediadelivery.net/embed/407063/{videoID}?autoplay=false" 
+            width="0" 
+            height="0" 
+            frameborder="0" 
+            style="display: none;"
+            title="Audio player"
+            allow="autoplay"
+        ></iframe>
+    {/if}
 </div>
-
-<style>
-	.starred {
-		@apply border-red-600;
-	}
-
-	.starred-ring {
-		@apply border-green-500;
-	}
-</style>
-

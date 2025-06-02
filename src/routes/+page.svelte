@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { writable } from 'svelte/store';
 	import { createClient } from '@supabase/supabase-js';
 	import BunnyVideo from '$lib/components/BunnyVideo.svelte';
@@ -10,6 +10,7 @@
 	import  logo  from '$lib/siteImages/Logo icon.png';
 	import { page } from '$app/stores';
 	import { Menu } from '@lucide/svelte';
+	import { browser } from '$app/environment';
 
 	interface Image {
 		src: string;
@@ -77,6 +78,9 @@
 
 	// Add this new state variable
 	let isScrolled = false;
+
+	// Add this new state variable
+	let showWelcome = true;
 
 	// Add this function to handle scroll events
 	function handleScroll() {
@@ -205,22 +209,19 @@
 			}
 		} catch (error) {
 			console.error('Error loading collections:', error);
-			collectionNames = []; // Initialize as empty array if there's an error
-			musicCollectionNames = []; // Initialize as empty array if there's an error
+			collectionNames = [];
+			musicCollectionNames = [];
 		}
 
 		// Call this when the component mounts
 		handleCategoryFromUrl();
 
-		// Initialize scroll state
-		handleScroll();
-		
-		// Add scroll event listener
-		window.addEventListener('scroll', handleScroll);
-		
-		return () => {
-			window.removeEventListener('scroll', handleScroll);
-		};
+		// Initialize scroll state only in browser
+		if (browser) {
+			handleScroll();
+			// Add scroll event listener
+			window.addEventListener('scroll', handleScroll);
+		}
 	});
 
 	// Reactive statement to ensure re-render
@@ -240,6 +241,7 @@
 		selectedCategory = category;
 		filteredImages = filterImages();
 		selectedCollection = null; // Reset selected collection when switching to images
+		showWelcome = false; // Hide welcome page when category is selected
 		toggleSidebar(); // Close the sidebar when a category is selected
 		history.pushState(null, '', `?category=${category}`); // Update the URL without reloading the page
 	}
@@ -298,6 +300,7 @@
 			return;
 		}
 
+		showWelcome = false; // Hide welcome page when video category is selected
 		isVideoLoading = true; // Set video loading state to true
 
 		try {
@@ -342,6 +345,7 @@
 			return;
 		}
 
+		showWelcome = false; // Hide welcome page when music category is selected
 		isVideoLoading = true; // Set video loading state to true
 
 		try {
@@ -410,6 +414,27 @@
 			'minecraft': '⛏️',
 			'roblox': '🎮',
 			'youtubers': '📺',
+			'backdrops': '🖼️',
+			'lightning': '⚡',
+			'smoke': '💨',
+			'scene replication': '🎬',
+			'space': '🚀',
+			'doors': '🚪',
+			'hands': '✋',
+			'emoji': '😀',
+			'spongebob': '🧽',
+			'fire': '🔥',
+			'countdown': '⏰',
+			'minions': '👁️',
+			'screens': '📺',
+			'among us': '🔴',
+			'news broadcast': '📰',
+			'memes': '😂',
+			'super powers': '⚡',
+			'anime': '🎌',
+			'special effects editors': '✨',
+			'first person': '👁️',
+			'weather': '🌤️',
 			
 			// Music
 			'background': '🎼',
@@ -495,7 +520,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="Videos">
+				<div class="Videos mb-6">
 					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('videos')}>
 						<div class="flex items-center gap-2">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
@@ -531,6 +556,7 @@
 						</div>
 					</div>
 				</div>
+				<!--
 				<div class="Music">
 					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('music')}>
 						<div class="flex items-center gap-2">
@@ -567,6 +593,9 @@
 						</div>
 					</div>
 				</div>
+				-->
+				<!-- Remove or comment out the entire Sound Effects section -->
+				<!--
 				<div class="SoundEffects">
 					<button class="w-full flex justify-between items-center py-5 text-white" on:click={() => toggleCollapse('soundEffects')}>
 						<div class="flex items-center gap-2">
@@ -604,6 +633,7 @@
 						</div>
 					</div>
 				</div>
+				-->
 			</div>
 			<div class="flex flex-col gap-4 mt-auto pb-6">
 				<div class="">
@@ -638,22 +668,6 @@
 						</span>
 					</a>
 				</div>
-				<div class="">
-					<a 
-						class="w-full flex justify-between items-center text-white bg-[#333333] rounded-md p-3" 
-						href="/youtube-gamers"
-					>
-						<div class="flex items-center gap-2">
-							<img src={YTGameIcon} alt="YouTube Gamers" class="w-6 h-6">
-							<span class="text-sm">YouTube Gamers</span>
-						</div>
-						<span class="transition-transform duration-300">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
-								<path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
-							</svg>
-						</span>
-					</a>
-				</div>
 			</div>
 		</div>
 		
@@ -675,6 +689,14 @@
 			<div class="flex justify-center items-center h-64">
 				<div class="loader"></div>
 			</div>
+		{:else if showWelcome}
+			<!-- Welcome Page -->
+			<div class="flex flex-col items-center justify-center h-full text-center text-white">
+				<h1 class="text-4xl font-bold mb-4">🔥Creator Vault🔥</h1>
+				<p class="text-lg text-gray-300">
+					👈 Select a category
+				</p>
+			</div>
 		{:else if selectedCollection}
 			<!-- Video/Music Gallery -->
 			<div class="flex flex-col gap-6">
@@ -684,22 +706,24 @@
 				<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
 					{#each selectedCollection.items as item}
 						{#if musicCollectionNames.includes(selectedCollection.name)}
+						<div class="grid grid-cols-1">
 							<BunnyMusic
 								videoID={item.guid}
-								{handleThumbnailClick}
-								{mainVideoID}
 								videoName={item.name}
 							/>
+						</div>
 						{:else}
+						
 							<BunnyVideo
 								videoID={item.guid}
 								{handleThumbnailClick}
 								{mainVideoID}
 							/>
+						
 						{/if}
 					{/each}
 				</div>
-			</div>
+				</div>
 		{:else}
 			<!-- Image Tiles -->
 			<div class="mt-12 pb-6">
